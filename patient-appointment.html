@@ -68,6 +68,14 @@
     <!-- Appointment Booking Form -->
     <div class="booking-form">
       <form id="bookingForm">
+        <!-- Doctor Selection (loaded from Firestore) -->
+        <div class="form-group">
+          <label for="doctorSelect">Select Doctor</label>
+          <select class="form-control" id="doctorSelect" required>
+            <option value="">-- Select Doctor --</option>
+          </select>
+        </div>
+
         <div class="form-group">
           <label for="appointmentDate">Select Appointment Date</label>
           <input type="date" class="form-control" id="appointmentDate" required>
@@ -84,11 +92,11 @@
       </form>
     </div>
     
-    <!-- Available Slots Calendar View -->
+    <!-- Available Slots View -->
     <div class="slots-section">
       <h5>Available Time Slots</h5>
       <div id="slotsContainer">
-        <p>Select a date to view available slots.</p>
+        <p>Select a doctor and date to view available slots.</p>
       </div>
     </div>
   </div>
@@ -116,7 +124,7 @@
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     
     // Your Firebase config
@@ -139,62 +147,136 @@
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         window.location.href = "login.html";
+      } else {
+        // Once user is confirmed, load doctors from Firestore
+        loadDoctors();
       }
     });
+
+    /**
+     * Dynamically loads doctors (where role === "doctor") into the #doctorSelect dropdown
+     */
+    async function loadDoctors() {
+      try {
+        const doctorSelect = document.getElementById("doctorSelect");
+        // Firestore query for users with role = "doctor"
+        const doctorsRef = collection(db, "users");
+        const doctorsQuery = query(doctorsRef, where("role", "==", "doctor"));
+        const doctorsSnapshot = await getDocs(doctorsQuery);
+
+        if (!doctorsSnapshot.empty) {
+          doctorsSnapshot.forEach((docSnap) => {
+            const docData = docSnap.data();
+            const option = document.createElement("option");
+            // Use docSnap.id as the doctorId if the doc's ID is the UID
+            option.value = docSnap.id; 
+            // Or docData.name if that’s what you want to display
+            option.textContent = docData.name || "Unnamed Doctor";
+            doctorSelect.appendChild(option);
+          });
+        } else {
+          // If no doctors found, you can show a message or leave the dropdown blank
+          const option = document.createElement("option");
+          option.value = "";
+          option.textContent = "No doctors available";
+          doctorSelect.appendChild(option);
+        }
+      } catch (error) {
+        console.error("Error loading doctors:", error);
+      }
+    }
     
-    // Load available slots when a date is selected
-    document.getElementById("appointmentDate").addEventListener("change", async function() {
-      const selectedDate = this.value;
-      if (!selectedDate) return;
-      
-      // Query available slots for the selected date (assumed stored in "appointment_slots")
-      const slotsQuery = query(collection(db, "appointment_slots"), where("date", "==", selectedDate), where("available", "==", true));
-      const slotsSnapshot = await getDocs(slotsQuery);
-      
-      let slotsHTML = "";
+    // Listen for date changes and doctor changes
+    document.getElementById("appointmentDate").addEventListener("change", loadAvailableSlots);
+    document.getElementById("doctorSelect").addEventListener("change", loadAvailableSlots);
+
+    async function loadAvailableSlots() {
+      const selectedDoctor = document.getElementById("doctorSelect").value;
+      const selectedDate = document.getElementById("appointmentDate").value;
       const timeSelect = document.getElementById("appointmentTime");
+      const slotsContainer = document.getElementById("slotsContainer");
+
+      // Clear old info
       timeSelect.innerHTML = `<option value="">-- Select Time Slot --</option>`;
-      
-      if (!slotsSnapshot.empty) {
+      slotsContainer.innerHTML = "<p>Select a doctor and date to view available slots.</p>";
+
+      // We need both a doctor and date
+      if (!selectedDoctor || !selectedDate) return;
+
+      // Query available slots for the selected date and doctor
+      try {
+        const slotsRef = collection(db, "available_slots");
+        const slotsQuery = query(
+          slotsRef,
+          where("doctorId", "==", selectedDoctor),
+          where("date", "==", selectedDate),
+          // If you store "available" as a boolean, you can add:
+          // where("available", "==", true)
+        );
+        const slotsSnapshot = await getDocs(slotsQuery);
+
+        if (slotsSnapshot.empty) {
+          slotsContainer.innerHTML = "<p>No available slots for the selected date.</p>";
+          return;
+        }
+
+        let slotsHTML = "";
         slotsSnapshot.forEach(docSnap => {
           const slot = docSnap.data();
-          // Add each slot to the available slots view and time select dropdown
+          // Add to the container
           slotsHTML += `<div class="alert alert-secondary p-2 mb-2">${slot.time}</div>`;
+          // Add to the <select>
           timeSelect.innerHTML += `<option value="${slot.time}">${slot.time}</option>`;
         });
-      } else {
-        slotsHTML = "<p>No available slots for the selected date.</p>";
+        slotsContainer.innerHTML = slotsHTML;
+      } catch (error) {
+        console.error("Error loading slots:", error);
+        slotsContainer.innerHTML = "<p>Failed to load slots. Check console.</p>";
       }
-      
-      document.getElementById("slotsContainer").innerHTML = slotsHTML;
-    });
+    }
     
     // Handle booking form submission
     document.getElementById("bookingForm").addEventListener("submit", async function(e) {
       e.preventDefault();
+      const selectedDoctor = document.getElementById("doctorSelect").value;
       const selectedDate = document.getElementById("appointmentDate").value;
       const selectedTime = document.getElementById("appointmentTime").value;
       const user = auth.currentUser;
       
-      if (!selectedDate || !selectedTime) {
-        document.getElementById("bookingMessage").innerText = "Please select both a date and a time.";
+      if (!selectedDoctor || !selectedDate || !selectedTime) {
+        document.getElementById("bookingMessage").innerText = "Please select a doctor, date, and time.";
         return;
       }
       
       try {
-        // Save the appointment booking (assuming "appointments" collection)
+        // Add to "appointments" collection
         await addDoc(collection(db, "appointments"), {
           patientId: user.uid,
-          appointmentDate: new Date(selectedDate),
+          doctorId: selectedDoctor,
+          appointmentDate: selectedDate,
           time: selectedTime,
-          bookedAt: new Date()
+          bookedAt: new Date(),
+          status: "pending"
         });
-        document.getElementById("bookingMessage").innerText = "";
+
+        // Optionally mark that slot as no longer available
+        const slotDocQuery = query(
+          collection(db, "available_slots"),
+          where("doctorId", "==", selectedDoctor),
+          where("date", "==", selectedDate),
+          where("time", "==", selectedTime)
+        );
+        const slotDocSnap = await getDocs(slotDocQuery);
+        slotDocSnap.forEach(async (slotDoc) => {
+          await updateDoc(doc(db, "available_slots", slotDoc.id), { available: false });
+        });
+
+        // Clear form fields
+        document.getElementById("bookingForm").reset();
+        document.getElementById("slotsContainer").innerHTML = "<p>Select a doctor and date to view available slots.</p>";
+        
         // Show confirmation modal
         $("#confirmationModal").modal("show");
-        // Optionally, clear form fields
-        document.getElementById("bookingForm").reset();
-        document.getElementById("slotsContainer").innerHTML = "<p>Select a date to view available slots.</p>";
       } catch (error) {
         document.getElementById("bookingMessage").innerText = "Error: " + error.message;
       }

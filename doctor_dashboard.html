@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Doctor Dashboard - Modern Hospital</title>
   <link rel="stylesheet" href="style.css">
   <!-- Bootstrap CSS -->
@@ -16,6 +16,12 @@
       font-family: 'Raleway', sans-serif;
       background-color: #f8f9fa;
       color: #333;
+    }
+    a{
+      text-decoration: none;
+    }
+    a.hover{
+      text-decoration: none;
     }
     .navbar-custom {
       background: linear-gradient(90deg, #28a745, #218838);
@@ -60,7 +66,6 @@
     }
     .calendar {
       width: 100%;
-      border-collapse: collapse;
       margin-top: 15px;
     }
     .calendar th, .calendar td {
@@ -70,6 +75,15 @@
     }
     .calendar th {
       background-color: #e9ecef;
+    }
+    /* Additional styling for appointments table */
+    .appointments-section {
+      margin-top: 30px;
+    }
+    .appointments-table th, .appointments-table td {
+      padding: 0.75rem;
+      text-align: left;
+      vertical-align: middle;
     }
   </style>
 </head>
@@ -96,24 +110,44 @@
   <!-- Dashboard Container -->
   <div class="container dashboard-container">
     <div id="greeting" class="greeting">Welcome, Dr. [Name]</div>
+    
+    <!-- Doctor Details Card -->
+    <div class="card mb-4">
+      <div class="card-header bg-secondary text-white">
+        Doctor Details
+      </div>
+      <div class="card-body" id="doctorDetails">
+        <p>Loading details...</p>
+      </div>
+    </div>
+    
+    <!-- Overview Cards Row -->
     <div class="row">
       <!-- Today’s Appointments Card -->
-      <div class="col-md-4">
-        <div class="card text-white bg-primary overview-card">
-          <div class="card-body">
-            <h5 class="card-title"><i class="fas fa-calendar-check"></i> Today's Appointments</h5>
-            <p id="appointmentsCount" class="card-text display-4">0</p>
+       
+        <div class="col-md-4">
+          <a href="appointmentdetail-doctor.html">
+          <div class="card text-white bg-primary overview-card">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-calendar-check"></i> Today's Appointments</h5>
+              <p id="appointmentsCount" class="card-text display-4">0</p>
+            </div>
           </div>
+        </a>
         </div>
-      </div>
+       
+      
       <!-- Patient Count Card -->
       <div class="col-md-4">
-        <div class="card text-white bg-success overview-card">
+        <a href="patient_list.html">
+          <div class="card text-white bg-success overview-card">
           <div class="card-body">
             <h5 class="card-title"><i class="fas fa-users"></i> Patient Count</h5>
             <p id="patientCount" class="card-text display-4">0</p>
           </div>
         </div>
+        </a>
+        
       </div>
       <!-- Pending Treatment Plans Card -->
       <div class="col-md-4">
@@ -145,7 +179,14 @@
           Calendar
         </div>
         <div class="card-body">
-          <table class="calendar">
+          <!-- Calendar Navigation -->
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <button id="prevMonth" class="btn btn-outline-secondary btn-sm">Previous</button>
+            <h5 id="monthAndYear" class="mb-0"></h5>
+            <button id="nextMonth" class="btn btn-outline-secondary btn-sm">Next</button>
+          </div>
+          <!-- Dynamic Calendar Table -->
+          <table class="calendar table table-bordered">
             <thead>
               <tr>
                 <th>Sun</th>
@@ -157,24 +198,67 @@
                 <th>Sat</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td></td><td></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>
-              </tr>
-              <tr>
-                <td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td>
-              </tr>
-              <tr>
-                <td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>19</td>
-              </tr>
-              <tr>
-                <td>20</td><td>21</td><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td>
-              </tr>
-              <tr>
-                <td>27</td><td>28</td><td>29</td><td>30</td><td>31</td><td></td><td></td>
-              </tr>
+            <tbody id="calendar-body">
+              <!-- Dynamic rows will be inserted here -->
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Add Available Date & Time Section -->
+    <div class="availability-section mt-4">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          Assign Available Dates & Times
+        </div>
+        <div class="card-body">
+          <form id="availabilityForm">
+            <div class="form-group">
+              <label for="availableDate">Select Date:</label>
+              <input type="date" id="availableDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="availableTime">Select Time:</label>
+              <input type="time" id="availableTime" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-success">Add Availability</button>
+          </form>
+
+          <!-- Display Assigned Slots -->
+          <div class="mt-4">
+            <h5>Assigned Slots</h5>
+            <ul id="assignedSlots" class="list-group">
+              <li class="list-group-item">No assigned slots yet.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appointments Section -->
+    <div class="appointments-section">
+      <div class="card">
+        <div class="card-header bg-secondary text-white">
+          Upcoming Appointments
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table appointments-table" id="appointmentsTable">
+              <thead class="thead-light">
+                <tr>
+                  <th>Patient ID</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="appointmentsTableBody">
+                <!-- We'll populate this dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <p id="noAppointmentsMsg" class="mt-3">No upcoming appointments found.</p>
         </div>
       </div>
     </div>
@@ -184,7 +268,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc, doc, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     
     const firebaseConfig = {
@@ -207,56 +291,211 @@
       const today = new Date();
       return today.toISOString().slice(0,10);
     }
-    
-    // Load data once user is authenticated
+
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Set greeting with doctor's display name
-        document.getElementById("greeting").innerText = `Welcome, Dr. ${user.displayName || ""}`;
         const doctorId = user.uid;
+        document.getElementById("greeting").innerText = `Welcome, Dr. ${user.displayName || ""}`;
+
+        // --- Load Doctor's Personal Details ---
+        try {
+          const userDocRef = doc(db, "users", doctorId);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const docDetails = userDocSnap.data();
+            document.getElementById("doctorDetails").innerHTML = `
+              <p><strong>Name:</strong> ${docDetails.name || user.displayName}</p>
+              <p><strong>Specialization:</strong> ${docDetails.specialization || "Not provided"}</p>
+              <p><strong>Email:</strong> ${docDetails.email || user.email}</p>
+              <p><strong>Phone:</strong> ${docDetails.phone || "Not provided"}</p>
+            `;
+          } else {
+            document.getElementById("doctorDetails").innerHTML = `<p>No additional details found.</p>`;
+          }
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+          document.getElementById("doctorDetails").innerHTML = `<p>Error loading details.</p>`;
+        }
+
+        // 2) COUNT TODAY'S CHECKINS (APPOINTMENTS)
         const today = getTodayDate();
+        // If your "checkins" doc has a date field, filter by that. 
+        // If it's called "checkinTime", you might need to compare timestamps differently.
+        const checkinQuery = query(
+          collection(db, "checkins"),
+          where("doctorId", "==", doctorId),
+          // If you store the date as a string "YYYY-MM-DD", you can do:
+          // where("date", "==", today)
+          // Or if you have a "checkinTime" as a timestamp, you might do something more advanced:
+          // where("checkinTime", ">=", startOfToday), etc.
+        );
+        const checkinSnapshot = await getDocs(checkinQuery);
+        document.getElementById("appointmentsCount").innerText = checkinSnapshot.size;
         
-        // Today’s Appointments
-        const appointmentsQuery = query(collection(db, "appointments"),
-                                        where("doctorId", "==", doctorId),
-                                        where("appointmentDate", "==", today));
-        const appointmentsSnapshot = await getDocs(appointmentsQuery);
-        document.getElementById("appointmentsCount").innerText = appointmentsSnapshot.size;
+        // 3) COUNT UNIQUE PATIENTS FROM THE "checkins" COLLECTION
+        // We'll gather unique patient IDs from all checkins for this doctor
+        const patientIds = new Set();
+        checkinSnapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.patientId) {
+            patientIds.add(data.patientId);
+          }
+        });
+        document.getElementById("patientCount").innerText = patientIds.size;
         
-        // Patient Count
-        const patientsQuery = query(collection(db, "patients"),
-                                    where("assignedDoctor", "==", doctorId));
-        const patientsSnapshot = await getDocs(patientsQuery);
-        document.getElementById("patientCount").innerText = patientsSnapshot.size;
-        
-        // Pending Treatment Plans
-        const pendingQuery = query(collection(db, "treatment_plans"),
-                                   where("doctorId", "==", doctorId),
-                                   where("status", "==", "pending"));
+        // 4) Pending Treatment Plans (Optional Example)
+        // If you have a "treatment_plans" collection or something similar, do the query:
+        const pendingQuery = query(
+          collection(db, "treatment_plans"),
+          where("doctorId", "==", doctorId),
+          where("status", "==", "pending")
+        );
         const pendingSnapshot = await getDocs(pendingQuery);
         document.getElementById("pendingPlansCount").innerText = pendingSnapshot.size;
         
-        // Urgent Alerts
-        const urgentQuery = query(collection(db, "appointments"),
-                                  where("doctorId", "==", doctorId),
-                                  where("urgent", "==", true));
+        // 5) Urgent Alerts
+        // If your "checkins" hold an "urgent" field or "appointmentType" = "emergency", you can do:
+        const urgentQuery = query(
+          collection(db, "checkins"),
+          where("doctorId", "==", doctorId),
+          where("appointmentType", "==", "emergency")
+        );
         const urgentSnapshot = await getDocs(urgentQuery);
         const alertsDiv = document.getElementById("urgentAlerts");
         alertsDiv.innerHTML = "";
         if (!urgentSnapshot.empty) {
-          urgentSnapshot.forEach(doc => {
-            const alertData = doc.data();
+          urgentSnapshot.forEach(docSnap => {
+            const alertData = docSnap.data();
             const alertItem = document.createElement("div");
             alertItem.className = "alert alert-danger";
-            alertItem.innerHTML = `<strong>Urgent:</strong> ${alertData.reason || "Urgent case!"}`;
+            alertItem.innerHTML = `<strong>Urgent:</strong> ${alertData.notes || "Emergency case!"}`;
             alertsDiv.appendChild(alertItem);
           });
         } else {
           alertsDiv.innerHTML = `<p>No urgent alerts at the moment.</p>`;
         }
+        
       } else {
+        // If user is not logged in, redirect to login page
         window.location.href = "login.html";
       }
+    });
+
+    // --- AVAILABILITY SLOTS ---
+    const availabilityForm = document.getElementById('availabilityForm');
+    const assignedSlotsList = document.getElementById('assignedSlots');
+
+    async function loadAssignedSlots(doctorId) {
+      const slotsQuery = query(
+        collection(db, "available_slots"),
+        where("doctorId", "==", doctorId)
+      );
+      const slotsSnapshot = await getDocs(slotsQuery);
+
+      assignedSlotsList.innerHTML = "";
+
+      if (!slotsSnapshot.empty) {
+        slotsSnapshot.forEach(docSnap => {
+          const slot = docSnap.data();
+          const slotItem = document.createElement('li');
+          slotItem.className = 'list-group-item';
+          slotItem.innerText = `${slot.date} at ${slot.time}`;
+          assignedSlotsList.appendChild(slotItem);
+        });
+      } else {
+        assignedSlotsList.innerHTML = `<li class="list-group-item">No assigned slots yet.</li>`;
+      }
+    }
+
+    availabilityForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const availableDate = document.getElementById('availableDate').value;
+      const availableTime = document.getElementById('availableTime').value;
+
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          try {
+            await addDoc(collection(db, "available_slots"), {
+              doctorId: user.uid,
+              date: availableDate,
+              time: availableTime,
+              available: true
+            });
+            alert("Availability added successfully!");
+            await loadAssignedSlots(user.uid);
+          } catch (error) {
+            console.error("Error adding availability: ", error);
+            alert("Failed to add availability. Try again.");
+          }
+        } else {
+          alert("You must be logged in to add availability.");
+          window.location.href = "login.html";
+        }
+      });
+    });
+
+    // Once we confirm the user is logged in, load assigned slots
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await loadAssignedSlots(user.uid);
+      }
+    });
+  </script>
+  
+  <!-- Dynamic Calendar Script -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      let currentMonth = new Date().getMonth();
+      let currentYear = new Date().getFullYear();
+      const monthAndYear = document.getElementById("monthAndYear");
+      const calendarBody = document.getElementById("calendar-body");
+
+      function generateCalendar(month, year) {
+        calendarBody.innerHTML = "";
+        let firstDay = new Date(year, month, 1).getDay();
+        let daysInMonth = new Date(year, month + 1, 0).getDate();
+        monthAndYear.innerText = new Date(year, month).toLocaleString("default", {month: "long", year: "numeric"});
+
+        let date = 1;
+        for (let i = 0; i < 6; i++) {
+          let row = document.createElement("tr");
+          for (let j = 0; j < 7; j++) {
+            let cell = document.createElement("td");
+            if (i === 0 && j < firstDay) {
+              cell.innerText = "";
+            } else if (date > daysInMonth) {
+              cell.innerText = "";
+            } else {
+              cell.innerText = date;
+              date++;
+            }
+            row.appendChild(cell);
+          }
+          calendarBody.appendChild(row);
+          if (date > daysInMonth) break;
+        }
+      }
+
+      document.getElementById("prevMonth").addEventListener("click", function(){
+        currentMonth--;
+        if(currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        generateCalendar(currentMonth, currentYear);
+      });
+
+      document.getElementById("nextMonth").addEventListener("click", function(){
+        currentMonth++;
+        if(currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        generateCalendar(currentMonth, currentYear);
+      });
+
+      // Initialize calendar for the current month
+      generateCalendar(currentMonth, currentYear);
     });
   </script>
   

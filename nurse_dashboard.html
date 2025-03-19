@@ -13,7 +13,7 @@
   <style>
     body {
       font-family: 'Raleway', sans-serif;
-      background-color: #f8f9fa;
+      background-color: #f1f5f9;
       color: #333;
     }
     .navbar-custom {
@@ -31,29 +31,56 @@
     .greeting {
       font-size: 1.5rem;
       font-weight: 600;
-      margin-bottom: 30px;
-      color: #007bff;
       text-align: center;
+      color: #007bff;
+      margin-bottom: 30px;
     }
-    .card {
+    .overview-card {
       border: none;
       border-radius: 10px;
       margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       transition: transform 0.2s ease-in-out;
     }
-    .card:hover {
+    .overview-card:hover {
       transform: translateY(-5px);
     }
     .overview-card .card-body {
       text-align: center;
     }
     .overview-card .card-title {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       margin-bottom: 10px;
     }
-    .alert-section {
+    .notifications-section {
       margin-top: 30px;
+    }
+    .quick-links {
+      margin-top: 40px;
+    }
+    .quick-link-card {
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease-in-out;
+      text-align: center;
+      padding: 20px;
+      cursor: pointer;
+    }
+    .quick-link-card:hover {
+      transform: translateY(-5px);
+    }
+    .quick-link-card i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #007bff;
+    }
+    .quick-link-card h5 {
+      margin: 0;
+      font-weight: 600;
+      color: #333;
     }
     .calendar-widget {
       margin-top: 30px;
@@ -78,7 +105,7 @@
   <nav class="navbar navbar-expand-md navbar-custom">
     <div class="container">
       <a class="navbar-brand" href="nurse_dashboard.html"><i class="fas fa-user-nurse"></i> Nurse Dashboard</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
               aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
          <span class="navbar-toggler-icon"></span>
       </button>
@@ -103,7 +130,7 @@
         <div class="card text-white bg-info overview-card">
           <div class="card-body">
             <h5 class="card-title"><i class="fas fa-procedures"></i> Patient Status</h5>
-            <p id="patientStatusCount" class="card-text display-4">0</p>
+            <p id="patientStatusCount" class="display-4">0</p>
           </div>
         </div>
       </div>
@@ -112,23 +139,23 @@
         <div class="card text-white bg-success overview-card">
           <div class="card-body">
             <h5 class="card-title"><i class="fas fa-pills"></i> Med Schedules</h5>
-            <p id="medScheduleCount" class="card-text display-4">0</p>
+            <p id="medScheduleCount" class="display-4">0</p>
           </div>
         </div>
       </div>
-      <!-- Alerts Card -->
+      <!-- Critical Alerts Card -->
       <div class="col-md-4">
         <div class="card text-white bg-danger overview-card">
           <div class="card-body">
             <h5 class="card-title"><i class="fas fa-exclamation-triangle"></i> Critical Alerts</h5>
-            <p id="criticalAlertsCount" class="card-text display-4">0</p>
+            <p id="criticalAlertsCount" class="display-4">0</p>
           </div>
         </div>
       </div>
     </div>
     
     <!-- Notifications Section -->
-    <div class="alert-section">
+    <div class="notifications-section">
       <div class="card">
         <div class="card-header bg-warning text-dark">
           Patient Check-Ins & Critical Changes
@@ -179,10 +206,33 @@
         </div>
       </div>
     </div>
+    
+    <!-- Quick Links Section -->
+    <div class="quick-links">
+      <div class="row">
+        <div class="col-md-4 col-6">
+          <div class="quick-link-card" onclick="window.location.href='nurse_patient_monitoring.html'">
+            <i class="fas fa-user-check"></i>
+            <h5>Patient Monitoring</h5>
+          </div>
+        </div>
+        <div class="col-md-4 col-6">
+          <div class="quick-link-card" onclick="window.location.href='nurse_patient_detail.html'">
+            <i class="fas fa-notes-medical"></i>
+            <h5>Med/Procedure Log</h5>
+          </div>
+        </div>
+        <div class="col-md-4 col-6">
+          <div class="quick-link-card" onclick="window.location.href='nurse-profile.html'">
+            <i class="fas fa-user-cog"></i>
+            <h5>My Profile</h5>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   
-  <!-- Firebase, Chart.js, and App Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase SDKs and App Scripts -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
@@ -211,34 +261,39 @@
     
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Set greeting
         document.getElementById("greeting").innerText = `Welcome, Nurse ${user.displayName || ""}`;
         const nurseId = user.uid;
         const today = getTodayDate();
         
-        // Query for Patient Status (patients assigned to this nurse)
+        // Patient Status: Count patients assigned to this nurse
         const patientStatusQuery = query(collection(db, "patients"), where("nurseId", "==", nurseId));
         const patientStatusSnapshot = await getDocs(patientStatusQuery);
         document.getElementById("patientStatusCount").innerText = patientStatusSnapshot.size;
         
-        // Query Medication Schedules for today (assuming schedules have nurseId and scheduleDate fields)
-        const medScheduleQuery = query(collection(db, "medication_schedules"), where("nurseId", "==", nurseId), where("scheduleDate", "==", today));
+        // Medication Schedules: Count schedules for today (assuming scheduleDate field)
+        const medScheduleQuery = query(collection(db, "medication_schedules"), 
+                                       where("nurseId", "==", nurseId), 
+                                       where("scheduleDate", "==", today));
         const medScheduleSnapshot = await getDocs(medScheduleQuery);
         document.getElementById("medScheduleCount").innerText = medScheduleSnapshot.size;
         
-        // Query Critical Alerts (for example, in an "alerts" collection)
-        const alertsQuery = query(collection(db, "alerts"), where("nurseId", "==", nurseId), where("critical", "==", true));
+        // Critical Alerts: Count alerts with critical flag true
+        const alertsQuery = query(collection(db, "alerts"), 
+                                  where("nurseId", "==", nurseId), 
+                                  where("critical", "==", true));
         const alertsSnapshot = await getDocs(alertsQuery);
         document.getElementById("criticalAlertsCount").innerText = alertsSnapshot.size;
         
-        // Populate Nurse Notifications (e.g., patient check-ins)
+        // Notifications: Load latest 5 check-in notifications
+        const notificationsQuery = query(collection(db, "checkins"), 
+                                         where("nurseId", "==", nurseId),
+                                         orderBy("checkinTime", "desc"),
+                                         limit(5));
+        const notificationsSnapshot = await getDocs(notificationsQuery);
         const notificationsDiv = document.getElementById("nurseNotifications");
         notificationsDiv.innerHTML = "";
-        // For this example, assume we query a "checkins" collection
-        const checkinsQuery = query(collection(db, "checkins"), where("nurseId", "==", nurseId));
-        const checkinsSnapshot = await getDocs(checkinsQuery);
-        if (!checkinsSnapshot.empty) {
-          checkinsSnapshot.forEach(docSnap => {
+        if (!notificationsSnapshot.empty) {
+          notificationsSnapshot.forEach(docSnap => {
             const checkin = docSnap.data();
             const notif = document.createElement("div");
             notif.className = "alert alert-info";
@@ -246,7 +301,7 @@
             notificationsDiv.appendChild(notif);
           });
         } else {
-          notificationsDiv.innerHTML = `<p>No new check-ins.</p>`;
+          notificationsDiv.innerHTML = "<p>No new check-ins.</p>";
         }
       } else {
         window.location.href = "login.html";

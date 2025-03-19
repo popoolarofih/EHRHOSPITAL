@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Appointment Details - Doctor Dashboard</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Raleway Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Raleway', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .navbar-custom {
+      background: linear-gradient(90deg, #28a745, #218838);
+      padding: 15px 40px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .navbar-custom .navbar-brand,
+    .navbar-custom .nav-link {
+      color: #fff;
+    }
+    .container {
+      padding: 40px 20px;
+    }
+    .table-actions button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-md navbar-custom">
+    <div class="container">
+      <a class="navbar-brand" href="doctor_dashboard.html"><i class="fas fa-user-md"></i> Doctor Dashboard</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item"><a class="nav-link" href="doctor_dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="appointmentdetail-doctor.html">Appointments</a></li>
+          <li class="nav-item"><a class="nav-link" href="doctorprofile.html">Profile</a></li>
+          <li class="nav-item"><a class="nav-link" href="login.html">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Main Container -->
+  <div class="container">
+    <h2 class="mb-4">Appointment Details</h2>
+    <div class="table-responsive">
+      <table class="table table-bordered" id="appointmentsTable">
+        <thead class="thead-light">
+          <tr>
+            <th>Appointment ID</th>
+            <th>Patient Name</th>
+            <th>Patient Email</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsTableBody">
+          <!-- Appointment rows will be appended here dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Reschedule Modal -->
+  <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rescheduleModalLabel">Reschedule Appointment</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="rescheduleForm">
+            <div class="form-group">
+              <label for="newDate">New Date</label>
+              <input type="date" class="form-control" id="newDate" required>
+            </div>
+            <div class="form-group">
+              <label for="newTime">New Time</label>
+              <input type="time" class="form-control" id="newTime" required>
+            </div>
+            <input type="hidden" id="appointmentIdToReschedule">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </form>
+          <div id="rescheduleMessage" class="mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase SDKs and App Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, updateDoc, doc, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    
+    // Replace these values with your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjRso9RQxY9Vcgg_7v-aNV-VF6HMVbIko",
+      authDomain: "bookkit-49189.firebaseapp.com",
+      databaseURL: "https://bookkit-49189-default-rtdb.firebaseio.com",
+      projectId: "bookkit-49189",
+      storageBucket: "bookkit-49189.firebasestorage.app",
+      messagingSenderId: "241256374457",
+      appId: "1:241256374457:web:87c3dec136dcf93a7b7b68",
+      measurementId: "G-W22Y8TVQV4"
+    };
+    
+    const appInstance = initializeApp(firebaseConfig);
+    const db = getFirestore(appInstance);
+    const auth = getAuth(appInstance);
+    
+    // Load all appointments for the logged-in doctor
+    async function loadAppointments(doctorId) {
+      const appointmentsRef = collection(db, "appointments");
+      const appointmentsQuery = query(appointmentsRef, where("doctorId", "==", doctorId));
+      const querySnapshot = await getDocs(appointmentsQuery);
+      
+      const appointmentsTableBody = document.getElementById("appointmentsTableBody");
+      appointmentsTableBody.innerHTML = ""; // Clear previous content
+      
+      // Loop through each appointment document
+      querySnapshot.forEach(async (docSnap) => {
+        const apptData = docSnap.data();
+        const apptId = docSnap.id;
+        
+        // Fetch patient details from the "users" collection
+        let patientName = "N/A";
+        let patientEmail = "N/A";
+        if (apptData.patientId) {
+          const patientDoc = await getDoc(doc(db, "users", apptData.patientId));
+          if (patientDoc.exists()) {
+            const patientData = patientDoc.data();
+            patientName = patientData.name || "N/A";
+            patientEmail = patientData.email || "N/A";
+          }
+        }
+        
+        // Create a table row with appointment details and action buttons
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${apptId}</td>
+          <td>${patientName}</td>
+          <td>${patientEmail}</td>
+          <td>${apptData.appointmentDate || ""}</td>
+          <td>${apptData.time || ""}</td>
+          <td id="status-${apptId}">${apptData.status || "pending"}</td>
+          <td class="table-actions">
+            <button class="btn btn-sm btn-info" onclick="markAsRead('${apptId}')">Mark as Read</button>
+            <button class="btn btn-sm btn-danger" onclick="cancelAppointment('${apptId}')">Cancel</button>
+            <button class="btn btn-sm btn-warning" onclick="openRescheduleModal('${apptId}')">Reschedule</button>
+          </td>
+        `;
+        appointmentsTableBody.appendChild(row);
+      });
+    }
+    
+    // Action: Mark as read (update status to "read")
+    async function markAsRead(apptId) {
+      try {
+        const apptRef = doc(db, "appointments", apptId);
+        await updateDoc(apptRef, { status: "read" });
+        document.getElementById("status-" + apptId).innerText = "read";
+        alert("Appointment marked as read.");
+      } catch (error) {
+        console.error("Error marking as read:", error);
+        alert("Failed to mark as read.");
+      }
+    }
+    
+    // Action: Cancel appointment (update status to "cancelled")
+    async function cancelAppointment(apptId) {
+      if (!confirm("Are you sure you want to cancel this appointment?")) return;
+      try {
+        const apptRef = doc(db, "appointments", apptId);
+        await updateDoc(apptRef, { status: "cancelled" });
+        document.getElementById("status-" + apptId).innerText = "cancelled";
+        alert("Appointment cancelled.");
+      } catch (error) {
+        console.error("Error cancelling appointment:", error);
+        alert("Failed to cancel appointment.");
+      }
+    }
+    
+    // Open reschedule modal and store appointmentId
+    function openRescheduleModal(apptId) {
+      document.getElementById("appointmentIdToReschedule").value = apptId;
+      document.getElementById("rescheduleMessage").innerText = "";
+      $("#rescheduleModal").modal("show");
+    }
+    
+    // Handle reschedule form submission
+    document.getElementById("rescheduleForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const apptId = document.getElementById("appointmentIdToReschedule").value;
+      const newDate = document.getElementById("newDate").value;
+      const newTime = document.getElementById("newTime").value;
+      
+      if (!newDate || !newTime) {
+        document.getElementById("rescheduleMessage").innerText = "Please enter a new date and time.";
+        return;
+      }
+      
+      try {
+        const apptRef = doc(db, "appointments", apptId);
+        await updateDoc(apptRef, { appointmentDate: newDate, time: newTime, status: "rescheduled" });
+        document.getElementById("rescheduleMessage").innerText = "Appointment rescheduled successfully.";
+        setTimeout(() => { $("#rescheduleModal").modal("hide"); location.reload(); }, 1500);
+      } catch (error) {
+        console.error("Error rescheduling appointment:", error);
+        document.getElementById("rescheduleMessage").innerText = "Failed to reschedule appointment.";
+      }
+    });
+    
+    // On auth state change, load appointments for the logged-in doctor
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        loadAppointments(user.uid);
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+    
+    // Expose functions to the global scope so inline event handlers can access them
+    window.markAsRead = markAsRead;
+    window.cancelAppointment = cancelAppointment;
+    window.openRescheduleModal = openRescheduleModal;
+  </script>
+  
+  <!-- jQuery, Popper.js, Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
