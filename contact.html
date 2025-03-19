@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact - Modern Hospital</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Raleway Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Raleway', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    /* Custom Navbar */
+    .custom-navbar {
+      background: linear-gradient(90deg, #28a745, #218838);
+      padding: 20px 40px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+    .custom-navbar .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+    .custom-navbar .navbar-brand i {
+      margin-right: 8px;
+      color: #fff;
+    }
+    .custom-navbar .nav-link {
+      font-weight: 500;
+      margin-right: 15px;
+      color: #fff;
+      transition: color 0.3s ease;
+    }
+    .custom-navbar .nav-link:hover {
+      color: #d4d4d4;
+    }
+    /* Page Header */
+    .page-header {
+      background: url('camilo-jimenez-vGu08RYjO-s-unsplash.jpg') no-repeat center center;
+      background-size: cover;
+      color: #fff;
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+    }
+    .page-header::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+    }
+    .page-header .container {
+      position: relative;
+      z-index: 2;
+    }
+    /* Contact Section */
+    .content-section {
+      padding: 60px 0;
+    }
+    .contact-info, .contact-form {
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    .btn-custom {
+      background-color: #28a745;
+      color: #fff;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+    }
+    .btn-custom:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-md custom-navbar">
+    <div class="container">
+      <a class="navbar-brand" href="index.html"><i class="fas fa-clinic-medical"></i>Modern Hospital</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="about.html"><i class="fas fa-info-circle"></i> About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="services.html"><i class="fas fa-concierge-bell"></i> Services</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="contact.html"><i class="fas fa-phone-alt"></i> Contact</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="container">
+      <h1>Contact Us</h1>
+      <p>We'd love to hear from you. Get in touch with us!</p>
+    </div>
+  </header>
+
+  <!-- Contact Content -->
+  <section class="content-section">
+    <div class="container">
+      <div class="row">
+        <!-- Contact Info -->
+        <div class="col-md-6">
+          <div class="contact-info">
+            <h2>Contact Information</h2>
+            <p><i class="fas fa-map-marker-alt"></i> Federal University of Agriculture Abeokuta, Ogun State</p>
+            <p><i class="fas fa-phone-alt"></i> +234 9017652551</p>
+            <p><i class="fas fa-envelope"></i> info@modernhospital.com</p>
+            <p><i class="fas fa-clock"></i> Mon - Fri: 8:00 AM - 6:00 PM</p>
+          </div>
+        </div>
+        <!-- Contact Form -->
+        <div class="col-md-6">
+          <div class="contact-form">
+            <h2>Send Us a Message</h2>
+            <form>
+              <div class="form-group">
+                <label for="name">Your Name</label>
+                <input type="text" class="form-control" id="name" placeholder="Enter your name">
+              </div>
+              <div class="form-group">
+                <label for="email">Your Email</label>
+                <input type="email" class="form-control" id="email" placeholder="Enter your email">
+              </div>
+              <div class="form-group">
+                <label for="message">Your Message</label>
+                <textarea class="form-control" id="message" rows="5" placeholder="Enter your message"></textarea>
+              </div>
+              <button type="submit" class="btn btn-custom">Send Message</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="social-icons mb-2">
+        <a href="#"><i class="fab fa-facebook-f"></i></a>
+        <a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+      <p>&copy; 2025 Modern Hospital. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS, jQuery, Popper.js -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patient Detail - Modern Hospital</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Raleway Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Raleway', sans-serif; background-color: #f1f5f9; }
+    .container { margin-top: 40px; }
+    .card { margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .progress { height: 20px; }
+    .notes-section { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-4">Patient Detail</h2>
+    
+    <!-- Patient Info Card (Read-Only) -->
+    <div class="card">
+      <div class="card-header bg-info text-white">Patient Information</div>
+      <div class="card-body">
+        <h5 id="patientName" class="card-title">Loading...</h5>
+        <p class="card-text">
+          <strong>Email:</strong> <span id="patientEmail">Loading...</span><br>
+          <strong>Age:</strong> <span id="patientAge">Loading...</span><br>
+          <strong>Gender:</strong> <span id="patientGender">Loading...</span>
+        </p>
+        <p class="card-text"><strong>Medical History:</strong> <span id="patientHistory">Loading...</span></p>
+      </div>
+    </div>
+    
+    <!-- Treatment Plan Overview with Progress -->
+    <div class="card">
+      <div class="card-header bg-success text-white">Treatment Plan Overview</div>
+      <div class="card-body">
+        <h5 id="planTitle" class="card-title">Loading...</h5>
+        <p id="planDetails" class="card-text">Loading treatment plan details...</p>
+        <div class="mb-2">
+          <strong>Progress:</strong>
+          <div class="progress">
+            <div id="planProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Observational Notes Section -->
+    <div class="card notes-section">
+      <div class="card-header bg-secondary text-white">Observational Notes & Medication</div>
+      <div class="card-body">
+        <p id="observationalNotes">Loading notes...</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjRso9RQxY9Vcgg_7v-aNV-VF6HMVbIko",
+      authDomain: "bookkit-49189.firebaseapp.com",
+      databaseURL: "https://bookkit-49189-default-rtdb.firebaseio.com",
+      projectId: "bookkit-49189",
+      storageBucket: "bookkit-49189.firebasestorage.app",
+      messagingSenderId: "241256374457",
+      appId: "1:241256374457:web:87c3dec136dcf93a7b7b68",
+      measurementId: "G-W22Y8TVQV4"
+    };
+    
+    const appInstance = initializeApp(firebaseConfig);
+    const db = getFirestore(appInstance);
+    
+    // Utility: Get query parameter from URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    const patientId = getQueryParam("patientId");
+    if (!patientId) {
+      alert("No patient ID provided in URL.");
+    } else {
+      async function loadPatientDetails() {
+        try {
+          const patientDoc = await getDoc(doc(db, "patients", patientId));
+          if (patientDoc.exists()) {
+            const data = patientDoc.data();
+            document.getElementById("patientName").innerText = data.name || "N/A";
+            document.getElementById("patientEmail").innerText = data.email || "N/A";
+            document.getElementById("patientAge").innerText = data.age || "N/A";
+            document.getElementById("patientGender").innerText = data.gender || "N/A";
+            document.getElementById("patientHistory").innerText = data.medicalHistory || "No history available.";
+          } else {
+            alert("Patient not found.");
+          }
+        } catch (error) {
+          console.error("Error loading patient details:", error);
+        }
+      }
+      
+      async function loadTreatmentPlan() {
+        try {
+          const planDoc = await getDoc(doc(db, "treatment_plans", patientId));
+          if (planDoc.exists()) {
+            const planData = planDoc.data();
+            document.getElementById("planTitle").innerText = planData.title || "No title";
+            document.getElementById("planDetails").innerText = planData.details || "No treatment plan details available.";
+            // Update progress indicator (assuming planData.progress exists as a number between 0 and 100)
+            const progress = planData.progress || 0;
+            const progressBar = document.getElementById("planProgress");
+            progressBar.style.width = progress + "%";
+            progressBar.innerText = progress + "%";
+            progressBar.setAttribute("aria-valuenow", progress);
+          } else {
+            document.getElementById("planTitle").innerText = "No Treatment Plan";
+            document.getElementById("planDetails").innerText = "Treatment plan has not been created yet.";
+            document.getElementById("planProgress").style.width = "0%";
+            document.getElementById("planProgress").innerText = "0%";
+          }
+        } catch (error) {
+          console.error("Error loading treatment plan:", error);
+        }
+      }
+      
+      async function loadObservationalNotes() {
+        try {
+          // Assuming observational notes are stored in a subcollection "notes" under the patient document
+          const notesSnapshot = await getDocs(collection(db, "patients", patientId, "notes"));
+          let notesText = "";
+          notesSnapshot.forEach(docSnap => {
+            const note = docSnap.data();
+            notesText += `• ${note.text}\n`;
+          });
+          document.getElementById("observationalNotes").innerText = notesText || "No observational notes available.";
+        } catch (error) {
+          console.error("Error loading notes:", error);
+        }
+      }
+      
+      loadPatientDetails();
+      loadTreatmentPlan();
+      loadObservationalNotes();
+    }
+  </script>
+  
+  <!-- jQuery, Popper.js, Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

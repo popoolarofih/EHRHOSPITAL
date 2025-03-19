@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patient Dashboard - Modern Hospital</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Raleway Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Raleway', sans-serif;
+      background-color: #f1f5f9;
+      color: #333;
+    }
+    .navbar-custom {
+      background: linear-gradient(90deg, #28a745, #218838);
+      padding: 15px 40px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .navbar-custom .navbar-brand,
+    .navbar-custom .nav-link {
+      color: #fff;
+    }
+    .dashboard-container {
+      padding: 40px 20px;
+    }
+    .greeting {
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      color: #28a745;
+      margin-bottom: 30px;
+    }
+    .overview-card {
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease-in-out;
+    }
+    .overview-card:hover {
+      transform: translateY(-5px);
+    }
+    .overview-card .card-body {
+      text-align: center;
+    }
+    .overview-card .card-title {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .notifications-section {
+      margin-top: 30px;
+    }
+    .notifications-section .card {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-md navbar-custom">
+    <div class="container">
+      <a class="navbar-brand" href="patient_dashboard.html"><i class="fas fa-user"></i> Patient Dashboard</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+         <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+         <ul class="navbar-nav ml-auto">
+           <li class="nav-item"><a class="nav-link" href="patient_dashboard.html">Dashboard</a></li>
+           <li class="nav-item"><a class="nav-link" href="logout.html">Logout</a></li>
+         </ul>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Dashboard Container -->
+  <div class="container dashboard-container">
+    <div id="greeting" class="greeting">Welcome, [Patient Name]</div>
+    <div class="row">
+      <!-- Upcoming Appointments Card -->
+      <div class="col-md-6">
+        <div class="card text-white bg-primary overview-card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-calendar-alt"></i> Upcoming Appointments</h5>
+            <p id="appointmentsCount" class="display-4">0</p>
+            <p id="nextAppointmentDetail">Loading...</p>
+          </div>
+        </div>
+      </div>
+      <!-- Current Treatment Summary Card -->
+      <div class="col-md-6">
+        <div class="card text-white bg-success overview-card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-notes-medical"></i> Treatment Summary</h5>
+            <p id="treatmentSummary" class="card-text">Loading...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notifications Section -->
+    <div class="notifications-section">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          Notifications
+        </div>
+        <div class="card-body" id="notifications">
+          <p>No new notifications.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase SDKs and App Scripts -->
+  <script type="module">
+    // Import necessary Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjRso9RQxY9Vcgg_7v-aNV-VF6HMVbIko",
+      authDomain: "bookkit-49189.firebaseapp.com",
+      databaseURL: "https://bookkit-49189-default-rtdb.firebaseio.com",
+      projectId: "bookkit-49189",
+      storageBucket: "bookkit-49189.firebasestorage.app",
+      messagingSenderId: "241256374457",
+      appId: "1:241256374457:web:87c3dec136dcf93a7b7b68",
+      measurementId: "G-W22Y8TVQV4"
+    };
+    
+    const appInstance = initializeApp(firebaseConfig);
+    const db = getFirestore(appInstance);
+    const auth = getAuth(appInstance);
+    
+    // Utility: Format date to YYYY-MM-DD
+    function getTodayDate() {
+      const today = new Date();
+      return today.toISOString().slice(0,10);
+    }
+    
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Update greeting with the doctor's display name if available
+        document.getElementById("greeting").innerText = `Welcome, ${user.displayName || "Patient"}`;
+        const patientId = user.uid;
+        const today = getTodayDate();
+        
+        // Query upcoming appointments for this patient
+        const appointmentsQuery = query(
+          collection(db, "appointments"),
+          where("patientId", "==", patientId),
+          where("appointmentDate", ">=", today),
+          orderBy("appointmentDate", "asc"),
+          limit(1)
+        );
+        const appointmentsSnapshot = await getDocs(appointmentsQuery);
+        if (!appointmentsSnapshot.empty) {
+          appointmentsSnapshot.forEach(docSnap => {
+            const appointment = docSnap.data();
+            document.getElementById("appointmentsCount").innerText = appointmentsSnapshot.size;
+            document.getElementById("nextAppointmentDetail").innerText = `Next: ${new Date(appointment.appointmentDate.seconds * 1000).toLocaleDateString()} at ${appointment.time || "N/A"}`;
+          });
+        } else {
+          document.getElementById("appointmentsCount").innerText = "0";
+          document.getElementById("nextAppointmentDetail").innerText = "No upcoming appointments.";
+        }
+        
+        // Query current treatment summary from "treatment_plans" for this patient
+        const treatmentQuery = query(
+          collection(db, "treatment_plans"),
+          where("patientId", "==", patientId)
+        );
+        const treatmentSnapshot = await getDocs(treatmentQuery);
+        if (!treatmentSnapshot.empty) {
+          // Assuming only one treatment plan is current; you can adjust as needed.
+          treatmentSnapshot.forEach(docSnap => {
+            const treatment = docSnap.data();
+            document.getElementById("treatmentSummary").innerText = treatment.summary || "No summary available.";
+          });
+        } else {
+          document.getElementById("treatmentSummary").innerText = "No treatment plan available.";
+        }
+        
+        // Query notifications for this patient (assuming "notifications" collection)
+        const notificationsQuery = query(
+          collection(db, "notifications"),
+          where("targetPatientId", "==", patientId),
+          orderBy("timestamp", "desc"),
+          limit(5)
+        );
+        const notificationsSnapshot = await getDocs(notificationsQuery);
+        const notificationsDiv = document.getElementById("notifications");
+        notificationsDiv.innerHTML = "";
+        if (!notificationsSnapshot.empty) {
+          notificationsSnapshot.forEach(docSnap => {
+            const note = docSnap.data();
+            const noteDiv = document.createElement("div");
+            noteDiv.className = "alert alert-info";
+            noteDiv.innerHTML = `<strong>${note.senderRole}</strong>: ${note.message} <br><small>${new Date(note.timestamp.seconds * 1000).toLocaleString()}</small>`;
+            notificationsDiv.appendChild(noteDiv);
+          });
+        } else {
+          notificationsDiv.innerHTML = `<p>No new notifications.</p>`;
+        }
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+  
+  <!-- jQuery, Popper.js, Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

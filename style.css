@@ -1,0 +1,194 @@
+/*--------------------------------------------------------------
+# Reset & Box Sizing
+--------------------------------------------------------------*/
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/*--------------------------------------------------------------
+# Import Raleway Font
+--------------------------------------------------------------*/
+@import url('https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap');
+
+/*--------------------------------------------------------------
+# Global Styles
+--------------------------------------------------------------*/
+body {
+  font-family: 'Raleway', sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Utility Container */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/*--------------------------------------------------------------
+# Typography
+--------------------------------------------------------------*/
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+p {
+  margin-bottom: 15px;
+}
+
+/*--------------------------------------------------------------
+# Navigation Styles
+--------------------------------------------------------------*/
+.navbar {
+  padding: 20px 40px;
+  /* For pages with custom navbar (e.g., admin pages) use .navbar-custom */
+}
+.navbar-custom {
+  background: linear-gradient(90deg, #28a745, #218838);
+  padding: 15px 40px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.navbar-brand {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+}
+.nav-link {
+  font-weight: 500;
+  color: #fff;
+  transition: color 0.3s ease;
+}
+.nav-link:hover {
+  color: #d4d4d4;
+}
+
+/*--------------------------------------------------------------
+# Hero Section (Landing Page)
+--------------------------------------------------------------*/
+.hero {
+  position: relative;
+  background: url('https://via.placeholder.com/1920x1080?text=Hospital+Background') no-repeat center center;
+  background-size: cover;
+  height: 90vh;
+  color: #fff;
+}
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 15px;
+}
+.hero-content h1 {
+  font-size: 3.5rem;
+  margin-bottom: 20px;
+}
+.hero-content p {
+  font-size: 1.25rem;
+  margin-bottom: 30px;
+}
+
+/*--------------------------------------------------------------
+# Button Styles
+--------------------------------------------------------------*/
+.btn-custom {
+  background-color: #28a745;
+  color: #fff;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  font-size: 1rem;
+}
+.btn-custom:hover {
+  background-color: #218838;
+}
+
+/*--------------------------------------------------------------
+# Footer Styles
+--------------------------------------------------------------*/
+footer {
+  background-color: #343a40;
+  color: #fff;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/*--------------------------------------------------------------
+# Dashboard Specific Styles
+--------------------------------------------------------------*/
+.dashboard-container {
+  padding: 40px 20px;
+}
+.card {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+.quick-actions {
+  margin-top: 20px;
+}
+
+/* Data Table Styles for User/Role/Audit Pages */
+.table {
+  background-color: #fff;
+  margin-bottom: 20px;
+}
+.table th,
+.table td {
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+.table thead th {
+  background-color: #f1f1f1;
+  border-bottom: 2px solid #dee2e6;
+}
+
+/*--------------------------------------------------------------
+# Modal Styles (e.g., for Edit User Modal)
+--------------------------------------------------------------*/
+.modal-content {
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/*--------------------------------------------------------------
+# Form & Input Styles
+--------------------------------------------------------------*/
+.form-control {
+  border-radius: 5px;
+  border: 1px solid #ced4da;
+}
+.form-control:focus {
+  border-color: #28a745;
+  box-shadow: none;
+}
+
+/*--------------------------------------------------------------
+# Responsive Tweaks
+--------------------------------------------------------------*/
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 2.75rem;
+  }
+  .hero-content p {
+    font-size: 1rem;
+  }
+  .navbar {
+    padding: 15px 20px;
+  }
+}

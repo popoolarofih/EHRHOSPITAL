@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patient Detail - Modern Hospital</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- Raleway Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Raleway', sans-serif; background-color: #f8f9fa; }
+    .container { margin-top: 40px; }
+    .card { margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .accordion .card-header { background-color: #28a745; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-4">Patient Detail</h2>
+    
+    <!-- Patient Info Card -->
+    <div class="card">
+      <div class="card-header">
+        Patient Information
+      </div>
+      <div class="card-body">
+        <h5 class="card-title" id="patientName">Loading...</h5>
+        <p class="card-text">
+          <strong>Email:</strong> <span id="patientEmail">Loading...</span><br>
+          <strong>Age:</strong> <span id="patientAge">Loading...</span><br>
+          <strong>Gender:</strong> <span id="patientGender">Loading...</span>
+        </p>
+        <p class="card-text"><strong>Medical History:</strong> <span id="patientHistory">Loading...</span></p>
+      </div>
+    </div>
+    
+    <!-- Treatment Plan Overview Card -->
+    <div class="card">
+      <div class="card-header">
+        Treatment Plan Overview
+      </div>
+      <div class="card-body">
+        <h5 class="card-title" id="planTitle">Loading...</h5>
+        <p class="card-text" id="planDetails">Loading treatment plan details...</p>
+      </div>
+    </div>
+    
+    <!-- Accordion for Segmented Data -->
+    <div class="accordion" id="patientAccordion">
+      <!-- History Tab -->
+      <div class="card">
+        <div class="card-header" id="headingHistory">
+          <h2 class="mb-0">
+            <button class="btn btn-link text-white" type="button" data-toggle="collapse" data-target="#collapseHistory" aria-expanded="true" aria-controls="collapseHistory">
+              Medical History
+            </button>
+          </h2>
+        </div>
+        <div id="collapseHistory" class="collapse show" aria-labelledby="headingHistory" data-parent="#patientAccordion">
+          <div class="card-body" id="detailedHistory">
+            Loading medical history...
+          </div>
+        </div>
+      </div>
+      <!-- Current Plan Tab -->
+      <div class="card">
+        <div class="card-header" id="headingPlan">
+          <h2 class="mb-0">
+            <button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapsePlan" aria-expanded="false" aria-controls="collapsePlan">
+              Current Treatment Plan
+            </button>
+          </h2>
+        </div>
+        <div id="collapsePlan" class="collapse" aria-labelledby="headingPlan" data-parent="#patientAccordion">
+          <div class="card-body" id="currentPlan">
+            Loading current treatment plan...
+          </div>
+        </div>
+      </div>
+      <!-- Lab Results Tab -->
+      <div class="card">
+        <div class="card-header" id="headingLab">
+          <h2 class="mb-0">
+            <button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapseLab" aria-expanded="false" aria-controls="collapseLab">
+              Lab Results
+            </button>
+          </h2>
+        </div>
+        <div id="collapseLab" class="collapse" aria-labelledby="headingLab" data-parent="#patientAccordion">
+          <div class="card-body" id="labResults">
+            Loading lab results...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, query, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjRso9RQxY9Vcgg_7v-aNV-VF6HMVbIko",
+      authDomain: "bookkit-49189.firebaseapp.com",
+      databaseURL: "https://bookkit-49189-default-rtdb.firebaseio.com",
+      projectId: "bookkit-49189",
+      storageBucket: "bookkit-49189.firebasestorage.app",
+      messagingSenderId: "241256374457",
+      appId: "1:241256374457:web:87c3dec136dcf93a7b7b68",
+      measurementId: "G-W22Y8TVQV4"
+    };
+    const appInstance = initializeApp(firebaseConfig);
+    const db = getFirestore(appInstance);
+    
+    // Utility: Get query parameter from URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    
+    const patientId = getQueryParam("patientId");
+    if (!patientId) {
+      alert("No patient ID provided.");
+    } else {
+      // Load Patient Details
+      async function loadPatientDetails() {
+        try {
+          const patientDoc = await getDoc(doc(db, "patients", patientId));
+          if (patientDoc.exists()) {
+            const data = patientDoc.data();
+            document.getElementById("patientName").innerText = data.name || "N/A";
+            document.getElementById("patientEmail").innerText = data.email || "N/A";
+            document.getElementById("patientAge").innerText = data.age || "N/A";
+            document.getElementById("patientGender").innerText = data.gender || "N/A";
+            document.getElementById("patientHistory").innerText = data.medicalHistory || "No history available.";
+            document.getElementById("detailedHistory").innerText = data.medicalHistory || "No detailed history available.";
+          } else {
+            alert("Patient not found.");
+          }
+        } catch (error) {
+          console.error("Error loading patient details:", error);
+        }
+      }
+      
+      // Load Treatment Plan Details for this patient
+      async function loadTreatmentPlan() {
+        try {
+          // Assuming treatment plans are stored in "treatment_plans" with a field "patientId"
+          const treatmentDoc = await getDoc(doc(db, "treatment_plans", patientId));
+          if (treatmentDoc.exists()) {
+            const planData = treatmentDoc.data();
+            document.getElementById("planTitle").innerText = planData.title || "No plan title";
+            document.getElementById("planDetails").innerText = planData.details || "No treatment plan details.";
+            document.getElementById("currentPlan").innerText = planData.currentPlan || "No current plan available.";
+          } else {
+            document.getElementById("planTitle").innerText = "No Treatment Plan";
+            document.getElementById("planDetails").innerText = "Treatment plan has not been created yet.";
+            document.getElementById("currentPlan").innerText = "No current plan available.";
+          }
+        } catch (error) {
+          console.error("Error loading treatment plan:", error);
+        }
+      }
+      
+      // Load Lab Results (example: assuming stored in a subcollection "lab_results" in patient document)
+      async function loadLabResults() {
+        try {
+          const labResultsQuery = await getDocs(collection(db, "patients", patientId, "lab_results"));
+          let resultsText = "";
+          labResultsQuery.forEach(docSnap => {
+            const result = docSnap.data();
+            resultsText += `${result.testName}: ${result.result}\n`;
+          });
+          document.getElementById("labResults").innerText = resultsText || "No lab results available.";
+        } catch (error) {
+          console.error("Error loading lab results:", error);
+        }
+      }
+      
+      loadPatientDetails();
+      loadTreatmentPlan();
+      loadLabResults();
+    }
+  </script>
+  
+  <!-- jQuery, Popper.js, Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
