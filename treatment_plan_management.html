@@ -1,131 +1,131 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Treatment Plan Management - Modern Hospital</title>
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <!-- FontAwesome for Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <!-- Raleway Font -->
-  <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Raleway', sans-serif; background-color: #f8f9fa; }
-    .container { margin-top: 40px; }
-    .card { margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .btn-custom { background-color: #28a745; color: #fff; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2 class="mb-4">Treatment Plan Management</h2>
-    <div class="card">
-      <div class="card-header">
-        Create / Update Treatment Plan
-      </div>
-      <div class="card-body">
-        <form id="treatmentPlanForm">
-          <input type="hidden" id="planId">
-          <div class="form-group">
-            <label for="planTitle">Plan Title</label>
-            <input type="text" class="form-control" id="planTitle" placeholder="Enter treatment plan title" required>
-          </div>
-          <div class="form-group">
-            <label for="planDetails">Plan Details / Notes</label>
-            <textarea class="form-control" id="planDetails" rows="5" placeholder="Enter detailed notes for the treatment plan" required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="nextAppointment">Next Appointment Date</label>
-            <input type="date" class="form-control" id="nextAppointment" required>
-          </div>
-          <button type="submit" class="btn btn-custom">Submit</button>
-          <button type="reset" class="btn btn-secondary ml-2">Reset</button>
-          <div id="planMessage" class="mt-3"></div>
-        </form>
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Treatment Plan Management - Modern Hospital</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Raleway Font -->
+    <link href="https://fonts.googleapis.com/css?family=Raleway:400,700&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: 'Raleway', sans-serif; background-color: #f8f9fa; }
+      .container { margin-top: 40px; }
+      .card { margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+      .btn-custom { background-color: #28a745; color: #fff; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2 class="mb-4">Treatment Plan Management</h2>
+      <div class="card">
+        <div class="card-header">
+          Create / Update Treatment Plan
+        </div>
+        <div class="card-body">
+          <form id="treatmentPlanForm">
+            <input type="hidden" id="planId">
+            <div class="form-group">
+              <label for="planTitle">Plan Title</label>
+              <input type="text" class="form-control" id="planTitle" placeholder="Enter treatment plan title" required>
+            </div>
+            <div class="form-group">
+              <label for="planDetails">Plan Details / Notes</label>
+              <textarea class="form-control" id="planDetails" rows="5" placeholder="Enter detailed notes for the treatment plan" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="nextAppointment">Next Appointment Date</label>
+              <input type="date" class="form-control" id="nextAppointment" required>
+            </div>
+            <button type="submit" class="btn btn-custom">Submit</button>
+            <button type="reset" class="btn btn-secondary ml-2">Reset</button>
+            <div id="planMessage" class="mt-3"></div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
-  
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     
-    const firebaseConfig = {
-      apiKey: "AIzaSyCjRso9RQxY9Vcgg_7v-aNV-VF6HMVbIko",
-      authDomain: "bookkit-49189.firebaseapp.com",
-      databaseURL: "https://bookkit-49189-default-rtdb.firebaseio.com",
-      projectId: "bookkit-49189",
-      storageBucket: "bookkit-49189.firebasestorage.app",
-      messagingSenderId: "241256374457",
-      appId: "1:241256374457:web:87c3dec136dcf93a7b7b68",
-      measurementId: "G-W22Y8TVQV4"
-    };
-    
-    const appInstance = initializeApp(firebaseConfig);
-    const db = getFirestore(appInstance);
-    const auth = getAuth(appInstance);
-    
-    // Utility: Get query parameter (assume patientId passed via URL)
-    function getQueryParam(param) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(param);
-    }
-    
-    const patientId = getQueryParam("patientId");
-    if (!patientId) {
-      alert("No patient ID provided in URL.");
-    }
-    
-    // On load, try to load an existing treatment plan if it exists
-    async function loadTreatmentPlan() {
-      try {
-        const planDoc = await getDoc(doc(db, "treatment_plans", patientId));
-        if (planDoc.exists()) {
-          const planData = planDoc.data();
-          document.getElementById("planTitle").value = planData.title || "";
-          document.getElementById("planDetails").value = planData.details || "";
-          document.getElementById("nextAppointment").value = planData.nextAppointment ? new Date(planData.nextAppointment.seconds * 1000).toISOString().split('T')[0] : "";
-          document.getElementById("planId").value = patientId;
+    <!-- Firebase SDKs -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+      import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+      
+      const firebaseConfig = {
+        apiKey: "AIzaSyCjRso9RQxY9Vcgg_7v-aNV-VF6HMVbIko",
+        authDomain: "bookkit-49189.firebaseapp.com",
+        databaseURL: "https://bookkit-49189-default-rtdb.firebaseio.com",
+        projectId: "bookkit-49189",
+        storageBucket: "bookkit-49189.firebasestorage.app",
+        messagingSenderId: "241256374457",
+        appId: "1:241256374457:web:87c3dec136dcf93a7b7b68",
+        measurementId: "G-W22Y8TVQV4"
+      };
+      
+      const appInstance = initializeApp(firebaseConfig);
+      const db = getFirestore(appInstance);
+      const auth = getAuth(appInstance);
+      
+      // Utility: Get query parameter (assume patientId passed via URL)
+      function getQueryParam(param) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(param);
+      }
+      
+      const patientId = getQueryParam("patientId");
+      if (!patientId) {
+        alert("No patient ID provided in URL.");
+      }
+      
+      // On load, try to load an existing treatment plan if it exists
+      async function loadTreatmentPlan() {
+        try {
+          const planDoc = await getDoc(doc(db, "treatment_plans", patientId));
+          if (planDoc.exists()) {
+            const planData = planDoc.data();
+            document.getElementById("planTitle").value = planData.title || "";
+            document.getElementById("planDetails").value = planData.details || "";
+            document.getElementById("nextAppointment").value = planData.nextAppointment ? new Date(planData.nextAppointment.seconds * 1000).toISOString().split('T')[0] : "";
+            document.getElementById("planId").value = patientId;
+          }
+        } catch (error) {
+          console.error("Error loading treatment plan:", error);
         }
-      } catch (error) {
-        console.error("Error loading treatment plan:", error);
       }
-    }
+      
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.href = "login.html";
+        } else {
+          loadTreatmentPlan();
+        }
+      });
+      
+      document.getElementById("treatmentPlanForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const title = document.getElementById("planTitle").value;
+        const details = document.getElementById("planDetails").value;
+        const nextAppointment = document.getElementById("nextAppointment").value;
+        // Save treatment plan with patientId as document id
+        try {
+          await setDoc(doc(db, "treatment_plans", patientId), {
+            title,
+            details,
+            nextAppointment: nextAppointment ? new Date(nextAppointment) : null,
+            updatedAt: new Date()
+          }, { merge: true });
+          document.getElementById("planMessage").innerText = "Treatment plan saved successfully.";
+        } catch (error) {
+          document.getElementById("planMessage").innerText = "Error: " + error.message;
+        }
+      });
+    </script>
     
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        loadTreatmentPlan();
-      }
-    });
-    
-    document.getElementById("treatmentPlanForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const title = document.getElementById("planTitle").value;
-      const details = document.getElementById("planDetails").value;
-      const nextAppointment = document.getElementById("nextAppointment").value;
-      // Save treatment plan with patientId as document id
-      try {
-        await setDoc(doc(db, "treatment_plans", patientId), {
-          title,
-          details,
-          nextAppointment: nextAppointment ? new Date(nextAppointment) : null,
-          updatedAt: new Date()
-        }, { merge: true });
-        document.getElementById("planMessage").innerText = "Treatment plan saved successfully.";
-      } catch (error) {
-        document.getElementById("planMessage").innerText = "Error: " + error.message;
-      }
-    });
-  </script>
-  
-  <!-- jQuery, Popper.js, Bootstrap JS -->
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+    <!-- jQuery, Popper.js, Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </body>
+  </html>

@@ -647,11 +647,6 @@
     <!-- Page Header -->
     <div class="page-header">
       <h1 class="page-title">Patient Check-ins</h1>
-      <div class="d-flex align-center gap-2">
-        <button class="btn btn-primary">
-          <i class="fas fa-plus"></i> New Check-in
-        </button>
-      </div>
     </div>
 
     <!-- Dashboard Stats -->
@@ -807,12 +802,12 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" id="closeModalBtn2">Close</button>
         <!-- When clicked, this button now triggers the edit functionality -->
-        <button class="btn btn-primary" id="editTreatmentPlanBtn" onclick="editTreatmentPlanFromDetail()">Edit Treatment Plan</button>
+        <button class="btn btn-primary" id="editTreatmentPlanBtn" onclick="redirectToTreatmentPlan()">Edit Treatment Plan</button>
       </div>
     </div>
   </div>
 
-  <!-- Edit Treatment Plan Modal -->
+  <!-- Edit Treatment Plan Modal
   <div class="edit-treatment-modal" id="editTreatmentModal">
     <div class="modal-content">
       <div class="modal-header">
@@ -832,7 +827,7 @@
         <button class="btn btn-primary" id="saveEditBtn">Save Changes</button>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
@@ -1063,24 +1058,13 @@
       }
     }
     
-    // Function to trigger editing treatment plan (from list/table view)
-    window.editTreatmentPlan = (patientId, checkinId) => {
-      // Save the check-in id globally for later update
-      currentEditCheckinId = checkinId;
-      // Find the check-in and prefill the treatment plan textarea
-      const checkin = allCheckins.find(c => c.id === checkinId);
-      document.getElementById("treatmentPlanInput").value = checkin ? checkin.treatmentPlan : "";
-      // Open the edit modal
-      document.getElementById("editTreatmentModal").style.display = "block";
+    // Edit treatment plan: redirect to the treatment plan management page
+    window.editTreatmentPlan = (patientId) => {
+      // Redirect with the patientId as a query parameter
+      window.location.href = "treatment_plan_management.html?patientId=" + encodeURIComponent(patientId);
     }
-    
     // Function to trigger edit from within the details modal
     function editTreatmentPlanFromDetail() {
-      // Here we can reuse the check-in id from the details modal.
-      // For simplicity, we assume that the details modal was opened by viewPatientDetails,
-      // so we find the checkin by matching the patientId and some other criteria if needed.
-      // Alternatively, you could store the current checkin id when opening the details modal.
-      // For now, let's assume the details modal corresponds to a single checkin:
       const patientId = document.getElementById("modalPatientId").textContent;
       const checkin = allCheckins.find(c => c.patientId === patientId);
       if (checkin) {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -106,7 +106,7 @@
   <!-- Firebase and App Scripts -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     
     const firebaseConfig = {
@@ -132,25 +132,52 @@
         const querySnapshot = await getDocs(patientsQuery);
         const tbody = document.getElementById("patientTableBody");
         tbody.innerHTML = "";
-        querySnapshot.forEach(docSnap => {
+        
+        // Loop over each patient document
+        for (const docSnap of querySnapshot.docs) {
           const patient = docSnap.data();
+          patient.id = docSnap.id;
+          
+          // Get treatment plan document for this patient
+          const tpDocRef = doc(db, "treatment_plans", patient.id);
+          const tpDocSnap = await getDoc(tpDocRef);
+          let treatmentProgress = "N/A";
+          if (tpDocSnap.exists()) {
+            const tpData = tpDocSnap.data();
+            treatmentProgress = tpData.title || "No Title";
+          }
+          
+          // Get vital signs document for this patient
+          const vsDocRef = doc(db, "vital_signs", patient.id);
+          let vitalSigns = "";
+          const vsDocSnap = await getDoc(vsDocRef);
+          if (vsDocSnap.exists()) {
+            const vsData = vsDocSnap.data();
+            vitalSigns = vsData.vitalSigns || "Not recorded";
+          } else {
+            // If not found, create a default vital signs document
+            vitalSigns = "Not recorded";
+            await setDoc(vsDocRef, { vitalSigns: vitalSigns, createdAt: new Date() });
+          }
+          
+          // Build table row for the patient
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>${patient.name || "N/A"}</td>
-            <td>${patient.vitalSigns || "N/A"}</td>
-            <td>${patient.treatmentProgress || "N/A"}</td>
+            <td>${vitalSigns}</td>
+            <td>${treatmentProgress}</td>
             <td>${patient.lastCheckIn ? new Date(patient.lastCheckIn.seconds * 1000).toLocaleTimeString() : "N/A"}</td>
             <td class="text-center">
-              <button class="btn btn-sm btn-view action-btn" onclick="viewDetails('${docSnap.id}')">
+              <button class="btn btn-sm btn-view action-btn" onclick="viewDetails('${patient.id}')">
                 <i class="fas fa-eye"></i> View Details
               </button>
-              <button class="btn btn-sm btn-update action-btn" onclick="logUpdate('${docSnap.id}')">
+              <button class="btn btn-sm btn-update action-btn" onclick="logUpdate('${patient.id}')">
                 <i class="fas fa-edit"></i> Log Update
               </button>
             </td>
           `;
           tbody.appendChild(tr);
-        });
+        }
       } else {
         window.location.href = "login.html";
       }
@@ -161,10 +188,12 @@
     };
     
     window.logUpdate = function(patientId) {
-      // Redirect or open modal for logging an update
+      // Redirect to or open a modal for logging an update.
+      // This can be extended to include more detailed update logging.
       alert("Log update for patient: " + patientId);
     };
     
+    // Search functionality
     document.getElementById("searchInput").addEventListener("input", function() {
       const filter = this.value.toLowerCase();
       const rows = document.querySelectorAll("#patientTableBody tr");
