@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html> 
+<html lang="en"> 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,16 +17,18 @@
       color: #333;
     }
     .login-container {
-      max-width: 400px;
-      margin: 80px auto;
+      max-width: 450px;
+      margin: 60px auto;
       background-color: #fff;
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     .login-container h2 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
+      color: #2c3e50;
+      font-weight: 700;
     }
     .btn-custom {
       background-color: #28a745;
@@ -34,10 +36,16 @@
       padding: 10px 20px;
       border: none;
       border-radius: 5px;
-      transition: background-color 0.3s ease;
+      transition: all 0.3s ease;
+      font-weight: 600;
     }
     .btn-custom:hover {
       background-color: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .btn-custom:active {
+      transform: translateY(0);
     }
     .text-link {
       text-align: center;
@@ -46,29 +54,197 @@
     .text-link a {
       color: #28a745;
       text-decoration: none;
+      font-weight: 600;
     }
     .text-link a:hover {
       text-decoration: underline;
+    }
+    .form-tab {
+      margin-bottom: 20px;
+      display: flex;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .tab-item {
+      padding: 10px 15px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 5px 5px 0 0;
+      margin-right: 5px;
+      transition: all 0.2s ease;
+    }
+    .tab-item.active {
+      background-color: #fff;
+      border-color: #dee2e6;
+      border-bottom-color: #fff;
+      margin-bottom: -1px;
+      color: #28a745;
+      font-weight: 600;
+    }
+    .tab-item:hover:not(.active) {
+      background-color: #f8f9fa;
+    }
+    .input-group-text {
+      background-color: #f8f9fa;
+      border-right: none;
+    }
+    .form-control {
+      border-left: none;
+    }
+    .form-control:focus {
+      box-shadow: none;
+      border-color: #ced4da;
+    }
+    .input-group-prepend + .form-control {
+      padding-left: 0;
+    }
+    .access-code-input {
+      letter-spacing: 1px;
+      font-family: monospace;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .toggle-password {
+      cursor: pointer;
+    }
+    .hospital-logo {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .hospital-logo i {
+      font-size: 48px;
+      color: #28a745;
+    }
+    .form-section {
+      display: none;
+    }
+    .form-section.active {
+      display: block;
+    }
+    .forgot-link {
+      font-size: 0.85rem;
+      text-align: right;
+      display: block;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
   <div class="container login-container">
-    <h2>Login</h2>
-    <form id="loginForm">
+    <div class="hospital-logo">
+      <i class="fas fa-hospital-alt"></i>
+      <h2>Modern Hospital</h2>
+    </div>
+    
+    <div class="form-tab">
+      <div class="tab-item active" data-target="standardLogin">Email Login</div>
+      <div class="tab-item" data-target="accessCodeLogin">Access Code Login</div>
+    </div>
+    
+    <!-- Standard Login Form -->
+    <form id="standardLoginForm" class="form-section active">
       <div class="form-group">
-        <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
-        <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+          </div>
+          <input type="email" class="form-control" id="email" placeholder="Email Address" required>
+        </div>
       </div>
       <div class="form-group">
-        <label for="password"><i class="fas fa-lock"></i> Password</label>
-        <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+          </div>
+          <input type="password" class="form-control" id="password" placeholder="Password" required>
+          <div class="input-group-append">
+            <span class="input-group-text toggle-password" onclick="togglePasswordVisibility('password')">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+        </div>
+        <a href="#" class="forgot-link">Forgot password?</a>
       </div>
       <button type="submit" class="btn btn-custom btn-block">Login</button>
     </form>
+    
+    <!-- Access Code Login Form -->
+    <form id="accessCodeLoginForm" class="form-section">
+      <div class="form-group">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="fas fa-key"></i></span>
+          </div>
+          <input type="text" class="form-control access-code-input" id="accessCode" placeholder="Access Code (e.g. ABC-1234)" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+          </div>
+          <input type="password" class="form-control" id="accessCodePassword" placeholder="Password" required>
+          <div class="input-group-append">
+            <span class="input-group-text toggle-password" onclick="togglePasswordVisibility('accessCodePassword')">
+              <i class="fas fa-eye"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="firstTimeLogin">
+        <label class="form-check-label" for="firstTimeLogin">This is my first time logging in</label>
+      </div>
+      <button type="submit" class="btn btn-custom btn-block">Login with Access Code</button>
+    </form>
+    
     <div id="error-message" class="text-danger mt-3"></div>
     <div id="success-message" class="text-success mt-3"></div>
-    <p class="text-link">Don't have an account? <a href="signup.html">Register here</a></p>
+    <p class="text-link">Need help? <a href="contact.html">Contact support</a></p>
+  </div>
+
+  <!-- Set New Password Modal (for first time login) -->
+  <div class="modal fade" id="newPasswordModal" tabindex="-1" role="dialog" aria-labelledby="newPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="newPasswordModalLabel">Set Your New Password</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>For security reasons, please set a new password for your account.</p>
+          <form id="newPasswordForm">
+            <div class="form-group">
+              <label for="newPassword">New Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="newPassword" placeholder="Enter new password" required>
+                <div class="input-group-append">
+                  <span class="input-group-text toggle-password" onclick="togglePasswordVisibility('newPassword')">
+                    <i class="fas fa-eye"></i>
+                  </span>
+                </div>
+              </div>
+              <small class="form-text text-muted">Password must be at least 8 characters with letters and numbers.</small>
+            </div>
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm new password" required>
+                <div class="input-group-append">
+                  <span class="input-group-text toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
+                    <i class="fas fa-eye"></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div id="passwordError" class="text-danger"></div>
+            <button type="submit" class="btn btn-success btn-block mt-4">Set Password & Continue</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Firebase SDKs -->
@@ -76,8 +252,8 @@
     // Import necessary Firebase modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, updatePassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -97,68 +273,239 @@
     const auth = getAuth();
     const db = getFirestore(app);
 
-    // Handle Login Form Submission
-    const loginForm = document.getElementById("loginForm");
-    loginForm.addEventListener("submit", (e) => {
-      e.preventDefault();
+    // Make functions accessible from global scope
+    window.firebaseApp = {
+      auth,
+      db,
+      handleStandardLogin,
+      handleAccessCodeLogin,
+      handleNewPassword
+    };
 
-      // Retrieve user inputs
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      // Clear any previous messages
-      document.getElementById("error-message").innerText = "";
-      document.getElementById("success-message").innerText = "";
-
-      // Authenticate user
-      signInWithEmailAndPassword(auth, email, password)
-        .then(async (userCredential) => {
-          const user = userCredential.user;
-          document.getElementById("success-message").innerText = "Login successful! Redirecting...";
-
-          // Retrieve additional user data from Firestore
-          try {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              const role = userData.role;
-              // Redirect based on role
-              let redirectURL = "";
-              switch(role) {
-                case "patient":
-                  redirectURL = "patient-dashboard.html";
-                  break;
-                case "doctor":
-                  redirectURL = "doctor_dashboard.html";
-                  break;
-                case "nurse":
-                  redirectURL = "nurse_dashboard.html";
-                  break;
-                case "admin":
-                  redirectURL = "admin-dashboard.html";
-                  break;
-                default:
-                  redirectURL = "login.html";
-              }
-              setTimeout(() => {
-                window.location.href = redirectURL;
-              }, 1500);
-            } else {
-              document.getElementById("error-message").innerText = "User data not found.";
-            }
-          } catch (err) {
-            document.getElementById("error-message").innerText = err.message;
+    // Standard Login
+    async function handleStandardLogin(email, password) {
+      try {
+        document.getElementById("error-message").innerText = "";
+        document.getElementById("success-message").innerText = "";
+        
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        document.getElementById("success-message").innerText = "Login successful! Redirecting...";
+        
+        // Retrieve user data and redirect accordingly
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          
+          // Check if this is the first login and user needs to activate account
+          if (userData.active === false) {
+            $('#newPasswordModal').modal('show');
+            return;
           }
-        })
-        .catch((error) => {
-          document.getElementById("error-message").innerText = error.message;
+          
+          // Redirect based on role
+          redirectByRole(userData.role);
+        } else {
+          document.getElementById("error-message").innerText = "User data not found.";
+        }
+      } catch (error) {
+        document.getElementById("error-message").innerText = "Invalid email or password.";
+        console.error(error);
+      }
+    }
+
+    // Access Code Login
+    async function handleAccessCodeLogin(accessCode, password, isFirstTime) {
+      try {
+        document.getElementById("error-message").innerText = "";
+        document.getElementById("success-message").innerText = "";
+        
+        // Find user with matching access code
+        const q = query(collection(db, "users"), where("accessCode", "==", accessCode));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          document.getElementById("error-message").innerText = "Invalid access code.";
+          return;
+        }
+        
+        // Get the first matching user
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+        
+        // Attempt to sign in with email and password
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, userData.email, password);
+          const user = userCredential.user;
+          
+          document.getElementById("success-message").innerText = "Login successful! Redirecting...";
+          
+          // Check if this is first time login
+          if (isFirstTime || userData.active === false) {
+            $('#newPasswordModal').modal('show');
+            return;
+          }
+          
+          // Redirect based on role
+          redirectByRole(userData.role);
+        } catch (error) {
+          document.getElementById("error-message").innerText = "Invalid password.";
+        }
+      } catch (error) {
+        document.getElementById("error-message").innerText = "An error occurred. Please try again.";
+        console.error(error);
+      }
+    }
+
+    // Handle setting new password
+    async function handleNewPassword(newPassword) {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          document.getElementById("passwordError").innerText = "No authenticated user found.";
+          return false;
+        }
+        
+        // Update password in Firebase Auth
+        await updatePassword(user, newPassword);
+        
+        // Update active status in Firestore
+        const userDoc = doc(db, "users", user.uid);
+        await updateDoc(userDoc, { active: true });
+        
+        // Get user data for redirection
+        const userSnapshot = await getDoc(userDoc);
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          
+          $('#newPasswordModal').modal('hide');
+          document.getElementById("success-message").innerText = "Password updated successfully! Redirecting...";
+          
+          // Redirect based on role
+          redirectByRole(userData.role);
+        }
+        
+        return true;
+      } catch (error) {
+        document.getElementById("passwordError").innerText = error.message;
+        console.error("Error updating password:", error);
+        return false;
+      }
+    }
+
+    // Helper function to redirect based on role
+    function redirectByRole(role) {
+      let redirectURL = "";
+      switch(role) {
+        case "doctor":
+          redirectURL = "doctor_dashboard.html";
+          break;
+        case "nurse":
+          redirectURL = "nurse_dashboard.html";
+          break;
+        case "admin":
+          redirectURL = "admin-dashboard.html";
+          break;
+        default:
+          redirectURL = "dashboard.html";
+      }
+      
+      setTimeout(() => {
+        window.location.href = redirectURL;
+      }, 1500);
+    }
+  </script>
+
+  <script>
+    // Tab switching functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabs = document.querySelectorAll('.tab-item');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          // Remove active class from all tabs and forms
+          document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
+          
+          // Add active class to clicked tab
+          this.classList.add('active');
+          
+          // Show corresponding form
+          const target = this.getAttribute('data-target');
+          document.getElementById(target + 'Form').classList.add('active');
+          
+          // Clear messages
+          document.getElementById('error-message').innerText = '';
+          document.getElementById('success-message').innerText = '';
         });
+      });
+      
+      // Handle standard login form submission
+      document.getElementById('standardLoginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        window.firebaseApp.handleStandardLogin(email, password);
+      });
+      
+      // Handle access code login form submission
+      document.getElementById('accessCodeLoginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const accessCode = document.getElementById('accessCode').value.trim().toUpperCase();
+        const password = document.getElementById('accessCodePassword').value;
+        const isFirstTime = document.getElementById('firstTimeLogin').checked;
+        window.firebaseApp.handleAccessCodeLogin(accessCode, password, isFirstTime);
+      });
+      
+      // Handle new password form submission
+      document.getElementById('newPasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const passwordError = document.getElementById('passwordError');
+        
+        // Password validation
+        if (newPassword.length < 8) {
+          passwordError.innerText = "Password must be at least 8 characters.";
+          return;
+        }
+        
+        if (!/\d/.test(newPassword) || !/[a-zA-Z]/.test(newPassword)) {
+          passwordError.innerText = "Password must contain both letters and numbers.";
+          return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+          passwordError.innerText = "Passwords do not match.";
+          return;
+        }
+        
+        passwordError.innerText = "";
+        window.firebaseApp.handleNewPassword(newPassword);
+      });
     });
+    
+    // Toggle password visibility
+    function togglePasswordVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      const icon = input.parentNode.querySelector('.toggle-password i');
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
   </script>
 
   <!-- Bootstrap JS, jQuery, and Popper.js -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>

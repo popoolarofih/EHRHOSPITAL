@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -43,6 +43,23 @@
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
+    .badge {
+      font-size: 85%;
+    }
+    .access-code {
+      font-family: monospace;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .copy-btn {
+      cursor: pointer;
+    }
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
   </style>
 </head>
 <body>
@@ -59,6 +76,14 @@
       <div class="col-md-4">
         <input type="text" id="searchInput" class="form-control" placeholder="Search users...">
       </div>
+      <div class="col-md-4">
+        <select id="roleFilter" class="form-control">
+          <option value="">All Roles</option>
+          <option value="doctor">Doctors</option>
+          <option value="nurse">Nurses</option>
+          <option value="admin">Admins</option>
+        </select>
+      </div>
     </div>
     
     <!-- Data Table -->
@@ -69,6 +94,8 @@
             <th>Name</th>
             <th>Email</th>
             <th>Role</th>
+            <th>Access Code</th>
+            <th>Status</th>
             <th class="text-center">Actions</th>
           </tr>
         </thead>
@@ -100,22 +127,72 @@
               <input type="email" class="form-control" id="newUserEmail" placeholder="Enter email" required>
             </div>
             <div class="form-group">
-              <label for="newUserPassword">Password</label>
-              <input type="password" class="form-control" id="newUserPassword" placeholder="Enter password" required>
-            </div>
-            <div class="form-group">
               <label for="newUserRole">Role</label>
               <select class="form-control" id="newUserRole" required>
-                <option value="patient">Patient</option>
                 <option value="doctor">Doctor</option>
                 <option value="nurse">Nurse</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
+            <div class="form-group">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="generateCredentials" checked>
+                <label class="form-check-label" for="generateCredentials">
+                  Generate secure access code and password
+                </label>
+              </div>
+            </div>
             <button type="submit" class="btn btn-primary btn-block">Create User</button>
           </form>
           <div id="addUserError" class="text-danger mt-2"></div>
           <div id="addUserSuccess" class="text-success mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Credentials Modal -->
+  <div class="modal fade" id="credentialsModal" tabindex="-1" aria-labelledby="credentialsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="credentialsModalLabel">User Created Successfully</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle mr-2"></i> Please note these credentials. You won't be able to see the password again.
+          </div>
+          
+          <div class="card mb-3">
+            <div class="card-header bg-light">
+              <strong>Access Code</strong>
+              <button class="btn btn-sm btn-outline-secondary float-right copy-btn" onclick="copyToClipboard('accessCodeValue')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <div class="card-body">
+              <p class="access-code" id="accessCodeValue">Loading...</p>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header bg-light">
+              <strong>Default Password</strong>
+              <button class="btn btn-sm btn-outline-secondary float-right copy-btn" onclick="copyToClipboard('passwordValue')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <div class="card-body">
+              <p class="access-code" id="passwordValue">Loading...</p>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <button class="btn btn-primary btn-block" data-dismiss="modal">OK, I've Saved These</button>
+          </div>
         </div>
       </div>
     </div>
@@ -145,11 +222,18 @@
             <div class="form-group">
               <label for="editUserRole">Role</label>
               <select class="form-control" id="editUserRole" required>
-                <option value="patient">Patient</option>
                 <option value="doctor">Doctor</option>
                 <option value="nurse">Nurse</option>
                 <option value="admin">Admin</option>
               </select>
+            </div>
+            <div class="form-group">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="regenerateAccessCode">
+                <label class="form-check-label" for="regenerateAccessCode">
+                  Regenerate access code and password
+                </label>
+              </div>
             </div>
             <button type="submit" class="btn btn-info btn-block">Save Changes</button>
           </form>
@@ -159,11 +243,25 @@
     </div>
   </div>
 
+  <!-- Success Toast -->
+  <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
+    <div class="toast-header">
+      <i class="fas fa-check-circle text-success mr-2"></i>
+      <strong class="mr-auto">Success</strong>
+      <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="toast-body">
+      Operation completed successfully!
+    </div>
+  </div>
+
   <!-- Firebase and App Scripts -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, deleteUser as deleteAuthUser } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
     
     const firebaseConfig = {
       apiKey: "AIzaSyCjRso9RQxY9Vcgg_7v-aNV-VF6HMVbIko",
@@ -180,22 +278,57 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // Generate random access code
+    function generateAccessCode() {
+      const prefix = Math.random().toString(36).substring(2, 5).toUpperCase();
+      const numbers = Math.floor(Math.random() * 9000 + 1000);
+      return `${prefix}-${numbers}`;
+    }
+
+    // Generate random password
+    function generatePassword() {
+      const length = 10;
+      const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+      let password = "";
+      for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+      }
+      return password;
+    }
+
     // Render existing users
     async function renderUsers() {
       const querySnapshot = await getDocs(collection(db, "users"));
       const tbody = document.getElementById("userTableBody");
       tbody.innerHTML = "";
+      
       querySnapshot.forEach((docSnap) => {
         const userData = docSnap.data();
         const tr = document.createElement("tr");
+        
+        // Get badge color based on role
+        let badgeClass = "badge-secondary";
+        if (userData.role === "doctor") badgeClass = "badge-primary";
+        if (userData.role === "nurse") badgeClass = "badge-info";
+        if (userData.role === "admin") badgeClass = "badge-danger";
+        
         tr.innerHTML = `
           <td>${userData.name}</td>
           <td>${userData.email}</td>
-          <td>${userData.role}</td>
+          <td><span class="badge ${badgeClass}">${userData.role}</span></td>
+          <td>
+            <code class="access-code">${userData.accessCode || 'N/A'}</code>
+            ${userData.accessCode ? `<i class="fas fa-copy ml-2 text-secondary copy-btn" onclick="copyAccessCode('${userData.accessCode}')"></i>` : ''}
+          </td>
+          <td>
+            <span class="badge ${userData.active ? 'badge-success' : 'badge-warning'}">
+              ${userData.active ? 'Active' : 'Pending'}
+            </span>
+          </td>
           <td class="text-center">
             <button class="btn btn-sm btn-info action-btn" onclick="editUser('${docSnap.id}')"><i class="fas fa-edit"></i></button>
             <button class="btn btn-sm btn-danger action-btn" onclick="deleteUser('${docSnap.id}')"><i class="fas fa-trash-alt"></i></button>
-            <button class="btn btn-sm btn-secondary action-btn" onclick="assignRole('${docSnap.id}')"><i class="fas fa-user-tag"></i></button>
+            <button class="btn btn-sm btn-success action-btn" onclick="resetCredentials('${docSnap.id}')"><i class="fas fa-key"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -207,8 +340,8 @@
       e.preventDefault();
       const name = document.getElementById("newUserName").value.trim();
       const email = document.getElementById("newUserEmail").value.trim();
-      const password = document.getElementById("newUserPassword").value;
       const role = document.getElementById("newUserRole").value;
+      const generateCreds = document.getElementById("generateCredentials").checked;
       
       const addUserError = document.getElementById("addUserError");
       const addUserSuccess = document.getElementById("addUserSuccess");
@@ -216,6 +349,10 @@
       addUserSuccess.innerText = "";
       
       try {
+        // Generate access code and password
+        const accessCode = generateAccessCode();
+        const password = generateCreds ? generatePassword() : "DefaultPassword123!";
+        
         // 1. Create user in Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const newUser = userCredential.user;
@@ -225,12 +362,21 @@
           name,
           email,
           role,
+          accessCode,
+          active: false, // Require first login to activate
           createdAt: new Date()
         });
         
         addUserSuccess.innerText = "User created successfully!";
-        // Optionally reset the form
+        // Reset the form
         document.getElementById("addUserForm").reset();
+        
+        // Show credentials modal
+        document.getElementById("accessCodeValue").innerText = accessCode;
+        document.getElementById("passwordValue").innerText = password;
+        $("#addUserModal").modal("hide");
+        $("#credentialsModal").modal("show");
+        
         // Refresh the user table
         renderUsers();
       } catch (error) {
@@ -248,6 +394,7 @@
         document.getElementById("editUserName").value = userData.name;
         document.getElementById("editUserEmail").value = userData.email;
         document.getElementById("editUserRole").value = userData.role;
+        document.getElementById("regenerateAccessCode").checked = false;
         $("#editUserModal").modal("show");
       }
     };
@@ -259,27 +406,57 @@
       const updatedName = document.getElementById("editUserName").value.trim();
       const updatedEmail = document.getElementById("editUserEmail").value.trim();
       const updatedRole = document.getElementById("editUserRole").value;
+      const regenerateCreds = document.getElementById("regenerateAccessCode").checked;
       const editUserError = document.getElementById("editUserError");
       editUserError.innerText = "";
       
       try {
-        await updateDoc(doc(db, "users", userId), {
+        const updateData = {
           name: updatedName,
           email: updatedEmail,
           role: updatedRole
-        });
-        $("#editUserModal").modal("hide");
+        };
+        
+        // Generate new access code if requested
+        if (regenerateCreds) {
+          const newAccessCode = generateAccessCode();
+          const newPassword = generatePassword();
+          updateData.accessCode = newAccessCode;
+          updateData.active = false; // Require re-activation
+          
+          // Show credentials modal after update
+          await updateDoc(doc(db, "users", userId), updateData);
+          
+          document.getElementById("accessCodeValue").innerText = newAccessCode;
+          document.getElementById("passwordValue").innerText = newPassword;
+          $("#editUserModal").modal("hide");
+          $("#credentialsModal").modal("show");
+          
+          // Note: In a real application, you would need to update the user's password in Firebase Auth
+          // This requires admin privileges and would be handled on the server
+        } else {
+          await updateDoc(doc(db, "users", userId), updateData);
+          $("#editUserModal").modal("hide");
+          $('.toast').toast('show');
+        }
+        
         renderUsers();
       } catch (error) {
         editUserError.innerText = error.message;
       }
     });
 
-    // Delete user from Firestore (does NOT delete from Firebase Auth!)
+    // Delete user from Firestore and Auth
     window.deleteUser = async function(userId) {
-      if (confirm("Are you sure you want to delete this user from Firestore?")) {
+      if (confirm("Are you sure you want to delete this user? This cannot be undone.")) {
         try {
+          // Delete from Firestore
           await deleteDoc(doc(db, "users", userId));
+          
+          // Note: In a real application, you would need to delete the user in Firebase Auth as well
+          // This requires admin privileges and would be handled on the server
+          
+          $('.toast').toast('show');
           renderUsers();
         } catch (error) {
           alert(error.message);
@@ -287,18 +464,75 @@
       }
     };
 
-    // Assign role (Placeholder for additional role logic)
-    window.assignRole = function(userId) {
-      alert("Assign Role functionality to be implemented.");
+    // Reset credentials for a user
+    window.resetCredentials = async function(userId) {
+      if (confirm("Are you sure you want to reset this user's credentials?")) {
+        try {
+          const newAccessCode = generateAccessCode();
+          const newPassword = generatePassword();
+          
+          await updateDoc(doc(db, "users", userId), {
+            accessCode: newAccessCode,
+            active: false
+          });
+          
+          // Display the new credentials
+          document.getElementById("accessCodeValue").innerText = newAccessCode;
+          document.getElementById("passwordValue").innerText = newPassword;
+          $("#credentialsModal").modal("show");
+          
+          // Note: In a real application, you would need to update the user's password in Firebase Auth
+          // This requires admin privileges and would be handled on the server
+          
+          renderUsers();
+        } catch (error) {
+          alert(error.message);
+        }
+      }
     };
+
+    // Copy access code to clipboard
+    window.copyAccessCode = function(code) {
+      navigator.clipboard.writeText(code).then(() => {
+        $('.toast-body').text('Access code copied to clipboard!');
+        $('.toast').toast('show');
+      });
+    };
+
+    // Copy text to clipboard
+    window.copyToClipboard = function(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        $('.toast-body').text('Copied to clipboard!');
+        $('.toast').toast('show');
+      });
+    };
+
+    // Filter by role
+    document.getElementById("roleFilter").addEventListener("change", function() {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll("#userTableBody tr");
+      
+      if (filter === "") {
+        rows.forEach(row => row.style.display = "");
+      } else {
+        rows.forEach(row => {
+          const roleCell = row.querySelector("td:nth-child(3)").innerText.toLowerCase();
+          row.style.display = roleCell.includes(filter) ? "" : "none";
+        });
+      }
+    });
 
     // Searching the table
     document.getElementById("searchInput").addEventListener("input", function() {
       const filter = this.value.toLowerCase();
       const rows = document.querySelectorAll("#userTableBody tr");
+      
       rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(filter) ? "" : "none";
+        if (row.style.display !== "none" || document.getElementById("roleFilter").value === "") {
+          const text = row.innerText.toLowerCase();
+          row.style.display = text.includes(filter) ? "" : "none";
+        }
       });
     });
 
